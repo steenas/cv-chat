@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steen Agerskov Sørensen — Spørg mig</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #0f1117;
+      --paper:     #f7f6f2;
+      --mid:       #6b7280;
+      --rule:      #e2e0d8;
+      --accent:    #1d4ed8;
+      --accent-lt: #dbeafe;
+      --bubble-user: #1d4ed8;
+      --bubble-ai:   #ffffff;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100dvh;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .header-text h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.45rem;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.3px;
+    }
+
+    .header-text p {
+      font-size: 0.8rem;
+      color: var(--mid);
+      margin-top: 3px;
+      font-weight: 300;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    /* ── Conversation ── */
+    #conversation {
+      overflow-y: auto;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scroll-behavior: smooth;
+    }
+
+    /* Greeting card */
+    .greeting {
+      background: var(--accent-lt);
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 20px 22px;
+    }
+
+    .greeting p {
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      line-height: 1.65;
+    }
+
+    .greeting p + p { margin-top: 10px; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      background: #fff;
+      border: 1px solid #bfdbfe;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      white-space: nowrap;
+    }
+
+    .chip:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Message bubbles */
+    .msg {
+      display: flex;
+      gap: 10px;
+      max-width: 92%;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .msg.ai { align-self: flex-start; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      box-shadow: var(--shadow);
+    }
+
+    .msg.user .bubble {
+      background: var(--bubble-user);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.ai .bubble {
+      background: var(--bubble-ai);
+      color: var(--ink);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--rule);
+    }
+
+    /* Typing indicator */
+    .typing .bubble {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 14px 18px;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--mid);
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: .4; }
+      40%           { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── Input bar ── */
+    .input-bar {
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #user-input {
+      flex: 1;
+      resize: none;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+      max-height: 130px;
+      transition: border-color .15s;
+    }
+
+    #user-input:focus { border-color: var(--accent); }
+    #user-input::placeholder { color: #9ca3af; }
+
+    #send-btn {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+    }
+
+    #send-btn:hover { background: #1e40af; }
+    #send-btn:active { transform: scale(.93); }
+    #send-btn:disabled { background: var(--rule); cursor: default; }
+
+    #send-btn svg { width: 18px; height: 18px; }
+
+    /* ── Footer note ── */
+    .footer-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      padding-bottom: 6px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 500px) {
+      header { padding: 20px 16px 16px; }
+      #conversation { padding: 20px 16px; }
+      .input-bar { padding: 12px 16px 16px; }
+      .msg { max-width: 96%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dot { animation: none; opacity: .6; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="avatar">SS</div>
+    <div class="header-text">
+      <h1>Steen Agerskov Sørensen</h1>
+      <p><span class="status-dot"></span>Spørg direkte om min baggrund og erfaring</p>
+    </div>
+  </header>
+
+  <div id="conversation">
+    <div class="greeting">
+      <p>Hej! I stedet for at vade igennem et langt CV kan du stille mig præcis de spørgsmål, du har brug for svar på.</p>
+      <p>Jeg besvarer spørgsmål om min erfaring, kompetencer og baggrund — baseret på 30+ år i IT-branchen.</p>
+      <div class="chips">
+        <button class="chip" onclick="sendChip(this)">Hvad er din ledererfaring?</button>
+        <button class="chip" onclick="sendChip(this)">Hvordan bruger du AI i praksis?</button>
+        <button class="chip" onclick="sendChip(this)">Hvad er dine stærkeste kompetencer?</button>
+        <button class="chip" onclick="sendChip(this)">Fortæl om din karriere hos IBM</button>
+        <button class="chip" onclick="sendChip(this)">Hvilke sprog taler du?</button>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="input-bar">
+      <textarea
+        id="user-input"
+        placeholder="Stil et spørgsmål om Steens baggrund…"
+        rows="1"
+      ></textarea>
+      <button id="send-btn" onclick="sendMessage()" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+    <p class="footer-note">Svarene genereres af AI baseret på Steens CV og baggrund.</p>
+  </div>
+
+</div>
+
+<script>
+  const SYSTEM_PROMPT = `Du er en hjælpsom assistent der repræsenterer Steen Agerskov Sørensen i dialog med potentielle arbejdsgivere og recruitere.
+
+Din opgave er at besvare spørgsmål om Steens baggrund, erfaring og kompetencer — præcist, konkret og engagerende. Du taler på vegne af Steen, men i tredje person ("Steen har...", "Hans erfaring med...") medmindre det er mere naturligt at sige "jeg" i en given kontekst.
+
+Hold svarene kortfattede og relevante. Undgå at liste alt på en gang — svar på det der bliver spurgt om.
+
+STEENS PROFIL:
+
+PROFESSIONEL PROFIL:
+Erfaren IT-leder med over 30 års erfaring i global drift, risikostyring, compliance og forretningsoptimering — primært i IBM og Kyndryl.
+Anvender dagligt AI-værktøjer og automatiseringsplatforme som Make og Claude til at bygge løsninger der reducerer manuel arbejdsbyrde og forbedrer kvalitet.
+
+NØGLEKOMPETENCER:
+- AI & Automatisering i praksis (Make, Claude, Azure AI)
+- Strategisk IT-ledelse
+- Risk & Compliance (nordisk ansvar)
+- 24/7 Drift & Overvågning
+- Projektledelse & Transition
+- Budgetstyring & Økonomi
+- Kontrakt- & kontostyring
+- Tværfunktionelt samarbejde
+- Procesoptimering
+
+PROFESSIONEL ERFARING:
+
+Aeven (2025):
+- Network Advisory & Consulting Manager (maj–dec 2025)
+- Porteføljeoptimering og ressourcestyring for over 100 igangværende projekter under ny kontrakt
+- Støttede nye projektledere fra dag ét
+
+Kyndryl (2021–2025) — spinoff fra IBM:
+- Operations Monitoring Manager (jan 2021 – apr 2025)
+- Ledede 24/7 overvågningsteam (Windows og Mainframe)
+- Fakturering og tidsrapportering for 45 underleverandører
+- Forfatter på Kyndryls Employee Handbook
+- Nordisk ansvar for produktivitetsinitiativer
+- Omfordelte ansvar mellem Danmark, Norge og Ungarn — reducerede omkostninger og forbedrede kundeoplevelsen
+
+IBM (1994–2020):
+- Business Operations Manager (aug 2014 – dec 2020): Administrativt ansvar for op mod 1.500 medarbejdere i 8 lande, ressourcer og budgetter, intern database for roller og færdigheder
+- Offering Leader — Cloud & Data Center Solutions (aug 2012 – jul 2014): Nordic Service Offering Manager, prisstrategier, samarbejde mellem udvikling og salg
+- Nordic Risk & Compliance Manager (aug 2008 – feb 2012): Ugentlige opdateringer til topledelse, kvartalsvise vurderinger, audit-kontroller
+- Executive Assistant — Special Projects (feb–jun 2008): Strategiske transformationsprojekter, nordiske lande
+- Upline Manager — Nordic Distributed Services (feb 2004 – jan 2008): Ledede nordisk servicelinje i Finland, Sverige, Norge og Danmark — anerkendt som et af de bedste teams i IBMs europæiske organisation
+- Manager — Internal IT Operations (maj 2001 – jan 2004): 37 personer, Mainframe og Unix for IBMs globale softwareproduktion
+- Project Executive — Strategic Outsourcing (apr 1998 – apr 2001): Kundechef, profit og kontraktstyring, underleverandører
+- Project Manager — Software Development, Gardermoen Airport (mar 1997 – mar 1998): Lufthavnssystemtest, alle verifikationsfaser
+- Application Owner — Internal Business Systems (dec 1994 – feb 1997): Ordre- og faktureringssystemer, REXX-styreprogram
+
+Maersk Data (1988–1994):
+- Programmer & Project Manager: Komplet budgetterings- og omkostningsstyringssystem for Maersk Line
+
+UDDANNELSE OG KURSER:
+
+AI & Cloud:
+- Designing and implementing a Microsoft Azure AI Solution (Microsoft, okt 2024)
+- Microsoft Azure AI Fundamentals AI-900 (Microsoft, sep 2024)
+- AI at Kyndryl — Mainframe Modernization (Kyndryl, sep 2024)
+- AI Foundation (Kyndryl, sep 2024)
+- Python for Data Science (IBM, mar 2021)
+
+Blockchain & Emerging Tech:
+- IBM Blockchain Foundation Consulting (feb 2020)
+- IBM Blockchain Essentials V2 (jan 2020)
+- IBM Quantum Conversations (dec 2019)
+
+Ledelse:
+- L.E.A.D. for Managers (Kyndryl, jun 2023)
+- License to Lead — First-Line Manager (IBM, feb 2021)
+- CBA — Certificate of Business Administration (AVT Institute, 2005)
+
+Mainframe:
+- Modern Mainframe Advocate Foundation (Kyndryl, dec 2022)
+- Mainframe Specialist — IBM Mainframe Environment Fundamentals 2.4 (nov 2021)
+- COBOL Programming (nov 2021)
+
+SPROG:
+- Dansk — modersmål
+- Engelsk — flydende
+- Svensk — arbejdskendskab
+- Norsk — arbejdskendskab
+- Tysk — grundlæggende
+
+VÆRKTØJER:
+- Make (automatiseringsplatform) — avanceret
+- Claude AI — prompt engineering og AI-integration
+- Azure AI Services
+- Excel inkl. Pivot og VBA — avanceret
+- Microsoft Office
+- Python — grundlæggende
+
+KONTAKT:
+- Email: steen@pwt50.dk
+- Telefon: 2880 9659
+- LinkedIn tilgængeligt
+
+Hvis et spørgsmål ikke kan besvares ud fra ovenstående, sig venligt at du ikke har den information tilgængelig, og opfordr til direkte kontakt med Steen.`;
+
+  const history = [];
+  const conv = document.getElementById('conversation');
+  const input = document.getElementById('user-input');
+  const btn = document.getElementById('send-btn');
+
+  // Auto-resize textarea
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 130) + 'px';
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  function sendChip(el) {
+    input.value = el.textContent;
+    sendMessage();
+  }
+
+  function addMessage(role, text) {
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    conv.appendChild(wrap);
+    conv.scrollTop = conv.scrollHeight;
+    return bubble;
+  }
+
+  function showTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ai typing';
+    wrap.id = 'typing';
+    wrap.innerHTML = '<div class="bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    conv.appendChild(wrap);
+    conv.scrollTop = conv.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    btn.disabled = true;
+
+    addMessage('user', text);
+    history.push({ role: 'user', content: text });
+
+    showTyping();
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: SYSTEM_PROMPT, messages: history }),
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      const reply = data?.content?.[0]?.text ?? 'Beklager, noget gik galt. Prøv igen.';
+      addMessage('ai', reply);
+      history.push({ role: 'assistant', content: reply });
+
+    } catch (err) {
+      removeTyping();
+      addMessage('ai', 'Der opstod en fejl. Prøv igen om et øjeblik.');
+    }
+
+    btn.disabled = false;
+    input.focus();
+  }
+</script>
+</body>
+</html>
