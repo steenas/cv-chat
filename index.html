@@ -266,6 +266,7 @@
       .dot { animation: none; opacity: .6; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -438,7 +439,7 @@ Hvis et spørgsmål ikke kan besvares ud fra ovenstående, sig venligt at du ikk
     wrap.className = `msg ${role}`;
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    bubble.textContent = text;
+    bubble.innerHTML = marked.parse(text);
     wrap.appendChild(bubble);
     conv.appendChild(wrap);
     conv.scrollTop = conv.scrollHeight;
