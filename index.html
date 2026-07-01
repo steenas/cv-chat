@@ -246,6 +246,41 @@
 
     #send-btn svg { width: 18px; height: 18px; }
 
+    /* ── Template bar ── */
+    .template-bar {
+      padding: 10px 24px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tpl-label {
+      font-size: 0.72rem;
+      color: var(--mid);
+      white-space: nowrap;
+    }
+
+    .tpl-btn {
+      background: #fff;
+      border: 1px solid var(--rule);
+      color: var(--mid);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 11px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+
+    .tpl-btn:hover { background: var(--accent-lt); color: var(--accent); border-color: #bfdbfe; }
+    .tpl-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    @media (max-width: 500px) {
+      .template-bar { padding: 8px 16px 0; }
+    }
+
     /* ── Footer note ── */
     .footer-note {
       text-align: center;
@@ -294,6 +329,10 @@
   </div>
 
   <div>
+    <div id="template-bar" class="template-bar" style="display:none">
+      <span class="tpl-label">Skabelon:</span>
+      <button class="tpl-btn active" onclick="selectTemplate(this, '')">Fri dialog</button>
+    </div>
     <div class="input-bar">
       <textarea
         id="user-input"
@@ -344,7 +383,40 @@ Hvis et spørgsmål ikke kan besvares ud fra ovenstående, sig venligt at du ikk
     }
   }
 
+  async function loadTemplates() {
+    try {
+      const res = await fetch('https://pwt50.dk/cv-api/templates.php');
+      const data = await res.json();
+      if (data.success && data.templates.length > 0) {
+        const bar = document.getElementById('template-bar');
+        bar.style.display = 'flex';
+        let defaultBtn = null;
+        data.templates.forEach(t => {
+          const btn = document.createElement('button');
+          btn.className = 'tpl-btn';
+          btn.textContent = t.title;
+          btn.onclick = () => selectTemplate(btn, t.content);
+          bar.appendChild(btn);
+          if (t.is_default == 1) defaultBtn = { btn, content: t.content };
+        });
+        if (defaultBtn) selectTemplate(defaultBtn.btn, defaultBtn.content);
+      }
+    } catch (err) {
+      console.error('Kunne ikke hente skabeloner:', err);
+    }
+  }
+
+  function selectTemplate(btn, content) {
+    document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    input.value = content;
+    input.style.height = 'auto';
+    if (content) input.style.height = Math.min(input.scrollHeight, 130) + 'px';
+    if (content) input.focus();
+  }
+
   loadCV();
+  loadTemplates();
 
   const history = [];
   const conv = document.getElementById('conversation');
